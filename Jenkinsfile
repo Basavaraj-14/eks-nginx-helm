@@ -20,21 +20,19 @@ pipeline {
                sh 'docker build -t ${image}:${tag} .'
             }
         }
-        stage ("push image") {
-            steps {
-                withAWS(credentials: "$awscreds", region: "$region") {
-                    sh '''
-                        docker run --rm \
-                          -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
-                          -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-                          -e AWS_DEFAULT_REGION=us-east-1 \
-                
-                        amazon/aws-cli:latest ecr get-login-password --region $region | docker login --username AWS --password-stdin 187868012081.dkr.ecr.us-east-1.amazonaws.com
-                        docker tag ${image}:${tag}
-                        docker push ${image}:${tag} '''
-                }
-            }
+        sstage("Push image") {
+    steps {
+        withAWS(credentials: "${awscreds}", region: "${region}") {
+            sh '''
+                docker run --rm -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
+                  amazon/aws-cli:latest ecr get-login-password --region us-east-1 | \
+                  docker login --username AWS --password-stdin \
+                  187868012081.dkr.ecr.us-east-1.amazonaws.com && \
+                docker push 187868012081.dkr.ecr.us-east-1.amazonaws.com/nginx:latest
+            '''
         }
+    }
+}
         stage ("deploy to eks") {
             steps {
                 withAWS(credentials: "$awscreds", region: "$region") {
