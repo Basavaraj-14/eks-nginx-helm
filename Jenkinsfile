@@ -24,6 +24,8 @@ pipeline {
                 unzip awscliv2.zip
                 ./aws/install
                 aws --version '''
+            }
+        }
         stage("buid image") {
             steps {
                sh 'docker build -t ${image}:${tag} .'
