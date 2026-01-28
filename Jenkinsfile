@@ -15,18 +15,6 @@ pipeline {
                 checkout scm
             }
         }
-        stage("Install CLI") {
-            steps {
-                sh '''
-                    mkdir -p aws-cli
-                    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-                    unzip -o awscliv2.zip
-                    ./aws/install -i ./aws-cli -b ./aws-cli/bin
-                    export PATH="./aws-cli/bin:$PATH"
-                    aws --version
-                    '''
-    }
-}
         stage("buid image") {
             steps {
                sh 'docker build -t ${image}:${tag} .'
@@ -36,6 +24,7 @@ pipeline {
             steps {
                 withAWS(credentials: "$awscreds", region: "$region") {
                     sh '''
+                        docker run --rm -v ~/.aws:/root/.aws:ro amazon/aws-cli \
                         aws ecr get-login-password --region $region | docker login --username AWS --password-stdin 187868012081.dkr.ecr.us-east-1.amazonaws.com
                         docker tag ${image}:${tag}
                         docker push ${image}:${tag} '''
