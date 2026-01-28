@@ -20,7 +20,7 @@ pipeline {
                sh 'docker build -t ${image}:${tag} .'
             }
         }
-        sstage("Push image") {
+        stage("Push image") {
     steps {
         withAWS(credentials: "${awscreds}", region: "${region}") {
             sh '''
