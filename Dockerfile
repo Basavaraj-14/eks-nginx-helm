@@ -1,6 +1,6 @@
 FROM ubuntu:22.04 AS builder
 WORKDIR /opt
-RUN apt update -y && apt install -y maven git openjdk-11-jdk
+RUN apt update -y && apt install -y software-properties-common && add-apt-repository universe && apt-get update && apt-get install -y maven git openjdk-11-jdk
 COPY src ./src
 COPY pom.xml .
 RUN mvn clean package
