@@ -18,14 +18,12 @@ pipeline {
     stage("install CLI") {
         steps {
             sh '''
-                sudo rm -rf /var/lib/apt/lists/partial || true
-                sudo apt-get clean || true
-                sudo apt-get update || true
-                sudo apt-get install -y unzip curl || true
-                curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-                unzip awscliv2.zip
-                sudo ./aws/install
-                aws --version '''
+            apt-get update || true
+            apt-get install -y unzip curl || true
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            ./aws/install --bin-dir /usr/local/bin
+            aws --version '''
             }
         }
         stage("buid image") {
