@@ -33,34 +33,21 @@ pipeline {
         }
     }
 }
-        stage("Deploy to EKS") {
-    steps {
-        withAWS(credentials: "${awscreds}", region: "${region}") {
-            sh '''
-                docker run --rm --entrypoint /bin/sh \
-                  -v $(pwd):/workspace -w /workspace \
-                  -v ~/.kube:/root/.kube \
-                  -e AWS_ACCESS_KEY_ID \
-                  -e AWS_SECRET_ACCESS_KEY \
-                  -e AWS_DEFAULT_REGION=us-east-1 \
-                  alpine/helm:3.14.3 \
-                  -c "
-                    apk add --no-cache aws-cli &&
-                    aws eks update-kubeconfig --region us-east-1 --name nginx-cluster &&
-                    helm upgrade --install nginx-app . \
-                      --namespace production \
-                      --create-namespace \
-                      --set image.repository=187868012081.dkr.ecr.us-east-1.amazonaws.com/nginx \
-                      --set image.tag=latest
-                  "
-            '''
+        stage('Deploy') {
+            steps {
+                sh '''
+                    kubectl create namespace production --dry-run=client -o yaml | kubectl apply -f -
+                    kubectl run nginx-app --image=187868012081.dkr.ecr.us-east-1.amazonaws.com/nginx:latest \
+                      --port=80 --namespace=production --restart=Never --dry-run=client -o yaml | kubectl apply -f -
+                    kubectl expose pod nginx-app --type=LoadBalancer --port=80 --namespace=production --dry-run=client -o yaml | kubectl apply -f -
+                    kubectl get svc nginx-app -n production
+                '''
+            }
         }
     }
 }
 
-
-
-        stage ('verigy deployment') {
+        stage ('verify deployment') {
             steps {
                 withAWS(credentials: "$awscreds", region: "$region") {
                     sh '''
