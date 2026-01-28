@@ -38,23 +38,25 @@ pipeline {
         withAWS(credentials: "${awscreds}", region: "${region}") {
             sh '''
                 docker run --rm \
-                  -v kube-config:/root/.kube \
-                  -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
-                  amazon/aws-cli:latest \
-                  eks update-kubeconfig --region us-east-1 --name nginx-cluster
-                docker run --rm \
-                  -v kube-config:/root/.kube \
-                  -v $(pwd):/apps -w /apps \
+                  -v $(pwd):/workspace -w /workspace \
+                  -v ~/.kube:/root/.kube \
+                  -e AWS_ACCESS_KEY_ID \
+                  -e AWS_SECRET_ACCESS_KEY \
+                  -e AWS_DEFAULT_REGION=us-east-1 \
                   alpine/helm:3.14.3 \
-                  upgrade --install nginx-app . \
-                  --namespace production \
-                  --create-namespace \
-                  --set image.repository=187868012081.dkr.ecr.us-east-1.amazonaws.com/nginx \
-                  --set image.tag=latest
+                  sh -c "
+                    aws eks update-kubeconfig --region us-east-1 --name nginx-cluster &&
+                    helm upgrade --install nginx-app . \
+                      --namespace production \
+                      --create-namespace \
+                      --set image.repository=187868012081.dkr.ecr.us-east-1.amazonaws.com/nginx \
+                      --set image.tag=latest
+                  "
             '''
         }
     }
 }
+
 
         stage ('verigy deployment') {
             steps {
