@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
             region = 'us-east-1'
-            image = '187868012081.dkr.ecr.us-east-1.amazonaws.com/nginx:latest'
+            image = '187868012081.dkr.ecr.us-east-1.amazonaws.com/nginx'
             awscreds = 'awscreds'
             cluster = 'nginx-cluster'
             tag = 'latest'
