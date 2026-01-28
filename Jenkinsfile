@@ -24,7 +24,11 @@ pipeline {
             steps {
                 withAWS(credentials: "$awscreds", region: "$region") {
                     sh '''
-                        docker run --rm -v ~/.aws:/root/.aws:ro amazon/aws-cli \
+                        docker run --rm \
+                          -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+                          -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+                          -e AWS_DEFAULT_REGION=us-east-1 \
+                          amazon/aws-cli:latest \
                         aws ecr get-login-password --region $region | docker login --username AWS --password-stdin 187868012081.dkr.ecr.us-east-1.amazonaws.com
                         docker tag ${image}:${tag}
                         docker push ${image}:${tag} '''
