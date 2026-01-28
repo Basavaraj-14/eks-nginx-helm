@@ -53,7 +53,7 @@ pipeline {
                 -e AWS_DEFAULT_REGION=us-east-1 \
                 -v /var/jenkins_home/.kube:/root/.kube \
                 -v /var/jenkins_home/workspace/eks-nginx-deploy/nginx-helm:/charts/nginx-helm \
-                dtzar/helm-kubectl-aws:3.14.0 \
+                lachlanelvenson/k8s-helm:v3.14.0 \
                 sh -c "
                   aws eks update-kubeconfig --region us-east-1 --name nginx-cluster &&
                   helm upgrade --install nginx-app /charts/nginx-helm \
@@ -66,6 +66,7 @@ pipeline {
         }
     }
 }
+
 
 
 
