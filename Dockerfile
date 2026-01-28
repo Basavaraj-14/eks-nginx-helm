@@ -1,6 +1,6 @@
 FROM ubuntu:latest AS builder
 WORKDIR /opt
-RUN apt update -y && apt install maven && apt install git -y && apt install openjdk-jre-11
+RUN apt update -y && apt install maven -y && apt install git -y && apt install openjdk-jre-11 -y
 COPY src ./src
 COPY pom.xml .
 RUN mvn clean package
