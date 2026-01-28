@@ -37,14 +37,15 @@ pipeline {
     steps {
         withAWS(credentials: "${awscreds}", region: "${region}") {
             sh '''
-                docker run --rm \
+                docker run --rm --entrypoint /bin/sh \
                   -v $(pwd):/workspace -w /workspace \
                   -v ~/.kube:/root/.kube \
                   -e AWS_ACCESS_KEY_ID \
                   -e AWS_SECRET_ACCESS_KEY \
                   -e AWS_DEFAULT_REGION=us-east-1 \
                   alpine/helm:3.14.3 \
-                  sh -c "
+                  -c "
+                    apk add --no-cache aws-cli &&
                     aws eks update-kubeconfig --region us-east-1 --name nginx-cluster &&
                     helm upgrade --install nginx-app . \
                       --namespace production \
@@ -56,6 +57,7 @@ pipeline {
         }
     }
 }
+
 
 
         stage ('verigy deployment') {
