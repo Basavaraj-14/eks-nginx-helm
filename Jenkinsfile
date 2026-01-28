@@ -46,26 +46,31 @@ pipeline {
     steps {
         withAWS(credentials: awscreds, region: region) {
             sh '''
+              # 1) Generate kubeconfig using AWS CLI container
               docker run --rm \
                 -e AWS_ACCESS_KEY_ID \
                 -e AWS_SECRET_ACCESS_KEY \
                 -e AWS_SESSION_TOKEN \
                 -e AWS_DEFAULT_REGION=us-east-1 \
                 -v /var/jenkins_home/.kube:/root/.kube \
+                amazon/aws-cli:latest \
+                eks update-kubeconfig --region us-east-1 --name nginx-cluster
+
+              # 2) Deploy using Bitnami kubectl+helm image
+              docker run --rm \
+                -v /var/jenkins_home/.kube:/root/.kube \
                 -v /var/jenkins_home/workspace/eks-nginx-deploy/nginx-helm:/charts/nginx-helm \
-                lachlanelvenson/k8s-helm:v3.14.0 \
-                sh -c "
-                  aws eks update-kubeconfig --region us-east-1 --name nginx-cluster &&
-                  helm upgrade --install nginx-app /charts/nginx-helm \
-                    --namespace production \
-                    --create-namespace \
-                    --set image.repository=187868012081.dkr.ecr.us-east-1.amazonaws.com/nginx \
-                    --set image.tag=latest
-                "
+                bitnami/kubectl:latest \
+                helm upgrade --install nginx-app /charts/nginx-helm \
+                  --namespace production \
+                  --create-namespace \
+                  --set image.repository=187868012081.dkr.ecr.us-east-1.amazonaws.com/nginx \
+                  --set image.tag=latest
             '''
         }
     }
 }
+
 
 
 
