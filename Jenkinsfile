@@ -24,17 +24,23 @@ pipeline {
         }
 
         stage("Push to ECR") {
-            steps {
-                withAWS(credentials: awscreds, region: region) {
-                    sh '''
-                      aws ecr get-login-password --region $region \
-                      | docker login --username AWS --password-stdin 187868012081.dkr.ecr.us-east-1.amazonaws.com
+    steps {
+        withAWS(credentials: awscreds, region: region) {
+            sh '''
+              docker run --rm \
+                -e AWS_ACCESS_KEY_ID \
+                -e AWS_SECRET_ACCESS_KEY \
+                -e AWS_SESSION_TOKEN \
+                amazon/aws-cli:latest \
+                ecr get-login-password --region us-east-1 \
+              | docker login --username AWS --password-stdin 187868012081.dkr.ecr.us-east-1.amazonaws.com
 
-                      docker push ${image}:${tag}
-                    '''
-                }
-            }
+              docker push 187868012081.dkr.ecr.us-east-1.amazonaws.com/nginx:latest
+            '''
         }
+    }
+}
+
 
         stage("Deploy to EKS using Helm") {
             steps {
