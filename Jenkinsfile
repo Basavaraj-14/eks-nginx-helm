@@ -1,33 +1,75 @@
 pipeline {
-    // add your slave label name
-    agent { label 'My-First-Jenkins-Slave-Server'}
-    tools{
-        maven 'Maven-Test'
+    agent any
+    environment {
+            region = 'us-east-1'
+            image = '187868012081.dkr.ecr.us-east-1.amazonaws.com/nginx:latest'
+            awscreds = 'awscreds'
+            cluster = 'nginx-cluster'
+            tag = 'latest'
+
     }
     stages {
-        stage ('Checkout_SCM') {
-
+        stage("checkout code")
+        {
             steps {
-          	    
-	     checkout scm
+                checkout scm
             }
         }
-
-        stage ('Maven_Build') {
-
+        stage("sonarqube analysis"){
             steps {
-               sh 'mvn clean package'
+                sh 'mvn sonar:sonar'
             }
         }
-        
-        stage ('Deploy_Tomcat') {
-
+        stage("unit test") {
             steps {
-	      sshagent(['My-Tomcat-Server']) {
-              sh "scp -o StrictHostKeyChecking=no  target/maven-web-application.war  ec2-user@16.171.226.246:/opt/tomcat9/webapps"
-	      }
-         }
+                sh 'mvn test'
+            }
         }
-        
+        stage("buid image") {
+            steps {
+               sh 'docker build -t ${image}:${tag} .'
+            }
+        }
+        stage ("push image") {
+            steps {
+                withAWS(credentials: "$awscreds", region: "$region") {
+                    sh '''
+                        aws ecr get-login-password --region $region | docker login --username AWS --password-stdin 187868012081.dkr.ecr.us-east-1.amazonaws.com
+                        docker tag ${image}:${tag}
+                        docker push ${image}:${tag} '''
+                }
+            }
+        }
+        stage ("deploy to eks") {
+            steps {
+                withAWS(credentials: "$awscreds", region: "$region") {
+                    sh '''
+                        aws eks update-kubeconfig --region $region --name $cluster \
+                        helm upgrade --install nginx-app . --namespace production --create-namespace \
+                        --set image.repository=$image \
+                        --set image.tag=$tag '''
+                }
+            }
+        }
+        stage ('verigy deployment') {
+            steps {
+                withAWS(credentials: "$awscreds", region: "$region") {
+                    sh '''
+                        kubectl get svc -n production 
+                        kubectl get pods -n production '''
+                }
+            }
+        }
+    }
+}
+post {
+    always {
+        echo "pipeline completed"
+    }
+    failure {
+        echo "pipeline failed"
+    }
+    success {
+        echo "pipeline succeeded"
     }
 }
