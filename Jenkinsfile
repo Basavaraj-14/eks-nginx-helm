@@ -46,25 +46,30 @@ pipeline {
     steps {
         withAWS(credentials: awscreds, region: region) {
             sh '''
-              # Generate kubeconfig using AWS CLI container
+              # Update kubeconfig using AWS CLI container
               docker run --rm \
                 -e AWS_ACCESS_KEY_ID \
                 -e AWS_SECRET_ACCESS_KEY \
                 -e AWS_SESSION_TOKEN \
-                -v $HOME/.kube:/root/.kube \
+                -v /var/jenkins_home/.kube:/root/.kube \
                 amazon/aws-cli:latest \
                 eks update-kubeconfig --region us-east-1 --name nginx-cluster
 
-              # Deploy using Helm (helm must exist on Jenkins)
-              helm upgrade --install nginx-app ./nginx-helm \
-                --namespace production \
-                --create-namespace \
-                --set image.repository=187868012081.dkr.ecr.us-east-1.amazonaws.com/nginx \
-                --set image.tag=latest
+              # Deploy using Helm container
+              docker run --rm \
+                -v /var/jenkins_home/.kube:/root/.kube \
+                -v $PWD/nginx-helm:/charts/nginx-helm \
+                alpine/helm:3.14.0 \
+                helm upgrade --install nginx-app /charts/nginx-helm \
+                  --namespace production \
+                  --create-namespace \
+                  --set image.repository=187868012081.dkr.ecr.us-east-1.amazonaws.com/nginx \
+                  --set image.tag=latest
             '''
         }
     }
 }
+
 
 
         stage("Verify") {
