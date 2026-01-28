@@ -47,6 +47,7 @@ pipeline {
         withAWS(credentials: awscreds, region: region) {
             sh '''
               docker run --rm \
+                --entrypoint /bin/sh \
                 -e AWS_ACCESS_KEY_ID \
                 -e AWS_SECRET_ACCESS_KEY \
                 -e AWS_SESSION_TOKEN \
@@ -54,7 +55,7 @@ pipeline {
                 -v /var/jenkins_home/.kube:/root/.kube \
                 -v /var/jenkins_home/workspace/eks-nginx-deploy/nginx-helm:/charts/nginx-helm \
                 alpine/helm:3.14.0 \
-                sh -c "
+                -c "
                   apk add --no-cache aws-cli &&
                   aws eks update-kubeconfig --region us-east-1 --name nginx-cluster &&
                   helm upgrade --install nginx-app /charts/nginx-helm \
