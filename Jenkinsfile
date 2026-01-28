@@ -38,7 +38,7 @@ pipeline {
                 withAWS(credentials: "$awscreds", region: "$region") {
                     sh '''
                        docker run --rm -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
-                       amazon/aws-cli:latest eks update-kubeconfig --region $region --name $cluster \
+                       amazon/aws-cli:latest eks update-kubeconfig --region $region --name $cluster 
                        helm upgrade --install nginx-app . --namespace production --create-namespace \
                         --set image.repository=$image \
                         --set image.tag=$tag '''
