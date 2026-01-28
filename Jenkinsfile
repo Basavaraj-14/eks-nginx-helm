@@ -60,7 +60,7 @@ pipeline {
                 -v /var/jenkins_home/.kube:/root/.kube \
                 -v $PWD/nginx-helm:/charts/nginx-helm \
                 alpine/helm:3.14.0 \
-                helm upgrade --install nginx-app /charts/nginx-helm \
+                upgrade --install nginx-app /charts/nginx-helm \
                   --namespace production \
                   --create-namespace \
                   --set image.repository=187868012081.dkr.ecr.us-east-1.amazonaws.com/nginx \
