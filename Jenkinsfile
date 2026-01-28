@@ -1,65 +1,33 @@
 pipeline {
-    agent any
-    environment {
-            region = 'us-east-1'
-            image = '187868012081.dkr.ecr.us-east-1.amazonaws.com/nginx'
-            awscreds = 'awscreds'
-            cluster = 'nginx-cluster'
-            tag = 'latest'
-
+    // add your slave label name
+    agent { label 'My-First-Jenkins-Slave-Server'}
+    tools{
+        maven 'Maven-Test'
     }
     stages {
-        stage("checkout code")
-        {
+        stage ('Checkout_SCM') {
+
             steps {
-                checkout scm
+          	    
+	     checkout scm
             }
         }
-        stage("buid image") {
+
+        stage ('Maven_Build') {
+
             steps {
-               sh 'docker build -t ${image}:${tag} .'
+               sh 'mvn clean package'
             }
         }
-        stage ("push image") {
+        
+        stage ('Deploy_Tomcat') {
+
             steps {
-                withAWS(credentials: "$awscreds", region: "$region") {
-                    sh '''
-                        aws ecr get-login-password --region $region | docker login --username AWS --password-stdin 187868012081.dkr.ecr.us-east-1.amazonaws.com
-                        docker tag ${image}:${tag}
-                        docker push ${image}:${tag} '''
-                }
-            }
+	      sshagent(['My-Tomcat-Server']) {
+              sh "scp -o StrictHostKeyChecking=no  target/maven-web-application.war  ec2-user@16.171.226.246:/opt/tomcat9/webapps"
+	      }
+         }
         }
-        stage ("deploy to eks") {
-            steps {
-                withAWS(credentials: "$awscreds", region: "$region") {
-                    sh '''
-                        aws eks update-kubeconfig --region $region --name $cluster \
-                        helm upgrade --install nginx-app . --namespace production --create-namespace \
-                        --set image.repository=$image \
-                        --set image.tag=$tag '''
-                }
-            }
-        }
-        stage ('verigy deployment') {
-            steps {
-                withAWS(credentials: "$awscreds", region: "$region") {
-                    sh '''
-                        kubectl get svc -n production 
-                        kubectl get pods -n production '''
-                }
-            }
-        }
-    }
-}
-post {
-    always {
-        echo "pipeline completed"
-    }
-    failure {
-        echo "pipeline failed"
-    }
-    success {
-        echo "pipeline succeeded"
+        
     }
 }
