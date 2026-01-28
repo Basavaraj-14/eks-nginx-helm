@@ -44,8 +44,6 @@ pipeline {
                 '''
             }
         }
-    }
-}
 
         stage ('verify deployment') {
             steps {
