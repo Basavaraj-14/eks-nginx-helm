@@ -15,16 +15,16 @@ pipeline {
                 checkout scm
             }
         }
-    sstage("Install CLI") {
-    steps {
-        sh '''
-            mkdir -p aws-cli
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip -o awscliv2.zip
-            ./aws/install -i ./aws-cli -b ./aws-cli/bin
-            export PATH="./aws-cli/bin:$PATH"
-            aws --version
-        '''
+        stage("Install CLI") {
+            steps {
+                sh '''
+                    mkdir -p aws-cli
+                    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                    unzip -o awscliv2.zip
+                    ./aws/install -i ./aws-cli -b ./aws-cli/bin
+                    export PATH="./aws-cli/bin:$PATH"
+                    aws --version
+                    '''
     }
 }
         stage("buid image") {
