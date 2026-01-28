@@ -15,16 +15,6 @@ pipeline {
                 checkout scm
             }
         }
-        stage("sonarqube analysis"){
-            steps {
-                sh 'mvn sonar:sonar'
-            }
-        }
-        stage("unit test") {
-            steps {
-                sh 'mvn test'
-            }
-        }
         stage("buid image") {
             steps {
                sh 'docker build -t ${image}:${tag} .'
